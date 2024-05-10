@@ -2,8 +2,10 @@ from keras.models import load_model  # TensorFlow is required for Keras to work
 import cv2  # Install opencv-python
 import numpy as np
 import requests
+import sys
+import base64
 
-url = 'http://localhost:8000'
+url = 'http://localhost:3000/cctv'
 
 # Disable scientific notation for clarity
 np.set_printoptions(suppress=True)
@@ -24,6 +26,8 @@ while True:
     ret, image = camera.read()
 
     _, img_encoded = cv2.imencode('.jpg', image)
+    encoded_frame = base64.b64encode(img_encoded).decode('utf-8')
+
 
     # Resize the raw image into (224-height,224-width) pixels
     image = cv2.resize(image, (224, 224), interpolation=cv2.INTER_AREA)
@@ -37,7 +41,6 @@ while True:
     # Normalize the image array
     image = (image / 127.5) - 1
 
-    imgcopy = image
     
     # Predicts the model
     prediction = model.predict(image)
@@ -48,9 +51,12 @@ while True:
     if index == 1:
         count = count + 1
 
-    if count == 5:
+    elif index == 0:
+        count = 0
+
+    if count == 1:
         #data = {'img': imgcopy, 'text':str(prediction[0][1])}
-        data = {'img': img_encoded.tobytes(), 'text':str(prediction[0][1])}        
+        data = {'id': "cctv1",'img': encoded_frame, 'text':str(prediction[0][1])}        
         response = requests.post(url, data)
         if response.status_code == 200:
             print('요청이 성공했습니다.')
