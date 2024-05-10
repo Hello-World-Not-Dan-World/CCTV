@@ -5,7 +5,7 @@ import requests
 import sys
 import base64
 
-url = 'http://localhost:3000/cctv'
+url = 'http://43.201.66.4:3000/api/cctv'
 
 # Disable scientific notation for clarity
 np.set_printoptions(suppress=True)
@@ -20,6 +20,12 @@ class_names = open("labels.txt", "r").readlines()
 camera = cv2.VideoCapture(0)
 
 count = 0
+
+locations = [[37.2390516,127.0831225],[37.2390516,127.0831325]]
+ind = 0
+
+sendcount = 0
+
 
 while True:
     # Grab the webcamera's image.
@@ -54,9 +60,9 @@ while True:
     elif index == 0:
         count = 0
 
-    if count == 1:
+    if count == 5 and ind < 2:
         #data = {'img': imgcopy, 'text':str(prediction[0][1])}
-        data = {'id': "cctv1",'img': encoded_frame, 'text':str(prediction[0][1])}        
+        data = {'location' : locations[ind],'photonum' : ind, 'img': encoded_frame, 'dirty':str(prediction[0][1])}        
         response = requests.post(url, data)
         if response.status_code == 200:
             print('요청이 성공했습니다.')
@@ -64,13 +70,14 @@ while True:
         else:
             print('요청이 실패했습니다. 상태 코드:', response.status_code)
         count = 0
+        ind = ind + 1
         
     class_name = class_names[index]
     confidence_score = prediction[0][index]
 
     # Print prediction and confidence score
-    print("Class:", class_name[2:], end="")
-    print("Confidence Score:", str(np.round(confidence_score * 100))[:-2], "%")
+    #print("Class:", class_name[2:], end="")
+    #print("Confidence Score:", str(np.round(confidence_score * 100))[:-2], "%")
 
     # Listen to the keyboard for presses.
     keyboard_input = cv2.waitKey(1)
